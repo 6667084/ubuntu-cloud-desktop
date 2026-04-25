@@ -429,7 +429,33 @@ echo "Desktop: $(dpkg -l ubuntu-desktop-minimal 2>/dev/null | tail -1 | awk '{pr
 echo "Chrome: $(google-chrome --version 2>/dev/null || echo 'NOT installed')"
 echo "Node: $(node --version 2>/dev/null || echo 'NOT installed')"
 echo "Swap: $(free -h | grep -i swap | awk '{print $2}')"
+echo "TAT: $(systemctl is-active tat_agent 2>/dev/null || echo 'NOT installed')"
 ```
+
+### 18. 恢复自动化助手 (TAT)
+
+DD 重装会清除所有腾讯云组件（TatAgent、stargate、sgagent、barad_agent 全部丢失）。如果需要通过腾讯云控制台免密执行命令，需重新安装 TAT agent。
+
+> **TAT 与主机安全是独立组件**：
+> - **TatAgent**（自动化助手）— 远程命令执行、免密连接，位于「计算」产品线
+> - **stargate/sgagent**（主机安全）— 安全监控、入侵检测，位于「云安全」产品线
+> - **barad_agent**（云监控）— 性能指标采集
+>
+> 只需免密连接的话，装 TatAgent 即可，不必装主机安全那套。
+
+```bash
+# 安装 TatAgent（脚本通过实例元数据自动识别实例，需能访问 metadata.tencentyun.com）
+curl -o /tmp/install_tat_agent.sh https://tat-agent-1301808552.cos.ap-guangzhou.myqcloud.com/tat_agent_install.sh
+bash /tmp/install_tat_agent.sh
+
+# 验证
+systemctl status tat_agent    # 应显示 active (running)
+ls /usr/local/qcloud/tat_agent/
+```
+
+安装完成后，即可在腾讯云控制台「轻量应用服务器 → 自动化助手」中免密执行命令。
+
+> **关于 SSH 端口**：TAT 只能执行命令，不能做交互式终端。建议保留 SSH 但在腾讯云防火墙中限制来源 IP，而非完全关闭。
 
 ## 腾讯云 IPv6 特殊说明
 
